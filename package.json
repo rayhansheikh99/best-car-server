@@ -16,5 +16,9 @@
     "dotenv": "^16.0.0",
     "express": "^4.17.2",
     "mongodb": "^4.3.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.8.0",
+    "eslint-plugin-react": "^7.28.0"
   }
 }
