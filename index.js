@@ -18,17 +18,115 @@ async function run() {
     try {
         await client.connect();
         const database = client.db('best-car');
-        const productsCollection = database.collection('products');
+        const productCollection = database.collection('products');
+        const orderCollection = database.collection('orders');
+        const reviewCollection = database.collection('reviews');
+        const userCollection = database.collection('users');
         
-       
+
         //GET Products API
         app.get('/products', async (req, res) => {
-            const cursor = productsCollection.find({});
+            const cursor = productCollection.find({});
             const products = await cursor.toArray();
             res.send(products);
         });
 
+        app.get('/orders', async (req, res) => {
+            const email = req.query.email
+            const query = { email: email }
+            const cursor = orderCollection.find(query);
+            const orders = await cursor.toArray();
+            res.send(orders);
+            
+        })
+        app.get('/allorder', async (req, res) => {
+            const cursor = orderCollection.find({});
+            const allorder = await cursor.toArray();
+            res.send(allorder);
+            console.log(allorder)
+        })
+        app.get('/reviews', async (req, res) => {
+            const cursor = reviewCollection.find({});
+            const reviews = await cursor.toArray();
+            res.send(reviews);
+          
+        })
+        app.get('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            let isAdmin = false;
+            if (user?.role === 'admin') {
+                isAdmin = true;
+            }
+            res.json({ admin: isAdmin });
+        })
 
+        // POST API
+        app.post('/orders', async (req, res) => {
+            const order = req.body;
+            const result = await orderCollection.insertOne(order);
+            res.json(result);
+           
+        })
+        app.post('/reviews', async (req, res) => {
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review);
+            res.json(result);
+            
+        })
+
+        app.post('/products', async (req, res) => {
+            const product = req.body;
+            const result = await productCollection.insertOne(product);
+            res.json(result);
+            console.log(result)
+        })
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const result = await userCollection.insertOne(user);
+            res.json(result);
+            console.log(result)
+        })
+
+        //PUT API
+
+        app.put('/users', async (req, res) => {
+          const user = req.body;
+          const filter = { email: user.email };
+          const options = { upsert: true };
+          const updateDoc = { $set: user };
+          const result = await userCollection.updateOne(filter, updateDoc, options);
+          res.json(result);
+      });
+
+      app.put('/users/admin', async (req, res) => {
+        const user = req.body
+        console.log('put',user)
+        const filter = {email: user.email}
+        const updateDoc = {$set: {role: 'admin'}}
+        const result = await userCollection.updateOne(filter,updateDoc)
+        res.json(result)
+      })
+
+        // DELETE API
+        app.delete('/orders/:id', async (req,res) => {
+            const id = req.params.id;
+            const query = {_id: ObjectId(id)};
+            const result = await orderCollection.deleteOne(query);
+            console.log('deleting user with id', result);
+            res.json(result);
+        })
+        app.delete('/products/:id', async (req,res) => {
+            const id = req.params.id;
+            console.log(id)
+            const query = {_id: ObjectId(id)};
+            const result = await productCollection.deleteOne(query);
+            console.log('deleting product with id', result);
+            res.json(result);
+        })
+
+       
 
     }
 
@@ -39,7 +137,7 @@ async function run() {
     run().catch(console.dir);
 
 app.get('/', (req, res) => {
-  res.send('Best Car Selling Server Started')
+  res.send('Best car server ready to Start')
 })
 
 app.listen(port, () => {
